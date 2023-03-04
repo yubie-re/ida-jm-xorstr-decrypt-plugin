@@ -126,6 +126,12 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
                 return None
         result = str(self.byte_xor(xor_data, xor_key))
         idc.set_cmt(func_addr, result, 0)
+        cfunc = idaapi.decompile(func_addr)
+        tl = idaapi.treeloc_t()
+        tl.ea = func_addr
+        tl.itp = idaapi.ITP_SEMI
+        cfunc.set_user_cmt(tl, result)
+        cfunc.save_user_cmts()
         return result
 
     def handle_pxor(self, func_addr):
