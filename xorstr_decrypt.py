@@ -1,14 +1,11 @@
-import ida_idaapi
-import ida_kernwin
-import idaapi
+import sys
+
 import ida_ua
-import idc
+import ida_bytes
 import ida_allins
 import ida_search
-
-import sys
-import ida_bytes
-
+import ida_kernwin
+import idaapi
 
 class xor_decryption_mod(ida_idaapi.plugmod_t):
     stack_count = 0
@@ -47,6 +44,7 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     def find_register_value(self, insn, reg):
         calls = 0
         while insn.itype != ida_allins.NN_mov or (insn.ops[0].type != ida_ua.o_reg) or (insn.ops[0].reg != reg) and calls < 1000:
+            calls += 1
             if insn.ea == idaapi.SIZE_MAX:
                 return None
             insn = self.get_previous_insn(insn.ea)
@@ -63,6 +61,7 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     def find_register_movdq_insn(self, insn, reg):
         calls = 0
         while (insn.itype != ida_allins.NN_vmovdqa and insn.itype != ida_allins.NN_vmovdqu and insn.itype != ida_allins.NN_movdqa and insn.itype != ida_allins.NN_movdqu) or (insn.ops[0].type != ida_ua.o_reg) or (insn.ops[0].reg != reg) and calls < 1000:
+            calls += 1
             if insn.ea == idaapi.SIZE_MAX:
                 return None
             insn = self.get_previous_insn(insn.ea)
