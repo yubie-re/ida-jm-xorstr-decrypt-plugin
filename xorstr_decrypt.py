@@ -1,11 +1,13 @@
 import sys
-
-import ida_ua
-import ida_bytes
 import ida_allins
-import ida_search
+import ida_bytes
+import ida_idaapi
 import ida_kernwin
+import ida_search
+import ida_ua
 import idaapi
+import idc
+
 
 class xor_decryption_mod(ida_idaapi.plugmod_t):
     stack_count = 0
@@ -44,7 +46,6 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     def find_register_value(self, insn, reg):
         calls = 0
         while insn.itype != ida_allins.NN_mov or (insn.ops[0].type != ida_ua.o_reg) or (insn.ops[0].reg != reg) and calls < 1000:
-            calls += 1
             if insn.ea == idaapi.SIZE_MAX:
                 return None
             insn = self.get_previous_insn(insn.ea)
@@ -61,7 +62,6 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     def find_register_movdq_insn(self, insn, reg):
         calls = 0
         while (insn.itype != ida_allins.NN_vmovdqa and insn.itype != ida_allins.NN_vmovdqu and insn.itype != ida_allins.NN_movdqa and insn.itype != ida_allins.NN_movdqu) or (insn.ops[0].type != ida_ua.o_reg) or (insn.ops[0].reg != reg) and calls < 1000:
-            calls += 1
             if insn.ea == idaapi.SIZE_MAX:
                 return None
             insn = self.get_previous_insn(insn.ea)
@@ -85,7 +85,11 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     def byte_xor(self, ba1, ba2):
         return bytes([_a ^ _b for _a, _b in zip(ba1, ba2)])
 
-    def handle_str_decryption(self, data_reg, key_address, previous_insn, data_address, func_addr, pxor_insn):
+    def handle_str_decryption(self, data_reg, key_address, func_addr, pxor_insn):
+        previous_insn = self.find_register_movdq_insn(pxor_insn, data_reg)
+        if previous_insn == None:
+            return None
+        data_address = previous_insn.ops[1].addr
         mov_start = self.find_stack_push_start(previous_insn, data_address)
         if mov_start == None:
             return None
@@ -138,21 +142,13 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
         insn = self.get_insn(func_addr)
         data_reg = insn.ops[0].reg
         key_address = insn.ops[1].addr
-        previous_insn = self.find_register_movdq_insn(insn, data_reg)
-        if previous_insn == None:
-            return None
-        data_address = previous_insn.ops[1].addr
-        return self.handle_str_decryption(data_reg, key_address, previous_insn, data_address, func_addr, insn)
+        return self.handle_str_decryption(data_reg, key_address, func_addr, insn)
 
     def handle_vpxor(self, func_addr):
         insn = self.get_insn(func_addr)
         data_reg = insn.ops[1].reg
         key_address = insn.ops[2].addr
-        previous_insn = self.find_register_movdq_insn(insn, data_reg)
-        if previous_insn == None:
-            return None
-        data_address = previous_insn.ops[1].addr
-        return self.handle_str_decryption(data_reg, key_address, previous_insn, data_address, func_addr, insn)
+        return self.handle_str_decryption(data_reg, key_address, func_addr, insn)
 
     def analyze(self, func_addr):
         insn = self.get_insn(func_addr)
