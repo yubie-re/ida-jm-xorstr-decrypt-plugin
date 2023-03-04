@@ -170,7 +170,7 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     movabs rax, -4140208776682645984
     mov QWORD PTR [rsp+56], rax
     vpxor ymm0, ymm1, YMMWORD PTR [rsp+32]
-    RETURN HERE >> vmovdqa YMMWORD PTR [rsp], ymm0
+     >> RETURNS HERE << vmovdqa YMMWORD PTR [rsp], ymm0
     """
     def find_stack_movdq_insn(self, insn, reg):
         calls = 0
@@ -205,7 +205,7 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     movabs rax, -4140208776682645984
     mov QWORD PTR [rsp+56], rax
     vpxor ymm0, ymm1, YMMWORD PTR [rsp+32]
-    RETURN HERE >> vmovdqa YMMWORD PTR [rsp], ymm0
+    vmovdqa YMMWORD PTR [rsp], ymm0
     """
     def find_next_stack_push(self, insn, address):
         calls = 0
