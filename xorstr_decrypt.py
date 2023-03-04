@@ -3,6 +3,8 @@ import idaapi
 import ida_ua
 import idc
 import ida_allins
+import ida_search
+
 import sys
 import ida_bytes
 
@@ -120,6 +122,17 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
         if insn.itype == ida_allins.NN_pxor:
            return self.handle_pxor(func_addr)
         return None
+    def analyze_sig_75(self, sig):
+        start_ea = idc.get_inf_attr(idc.INF_MIN_EA)
+        match_ea = ida_search.find_binary(start_ea, ida_idaapi.BADADDR, sig, 16, idc.SEARCH_DOWN)
+        match_ea = start_ea
+        while match_ea != idaapi.BADADDR:
+            match_ea = ida_search.find_binary(match_ea + 1, ida_idaapi.BADADDR, sig, 16, idc.SEARCH_DOWN)
+            if match_ea != idaapi.BADADDR:
+                #print("Processing {:08X}".format(match_ea))
+                result = self.analyze(match_ea)
+                if result != None:
+                    print("Found match at {:08X} {}".format(match_ea, result))
     def analyze_sig(self, sig):
         start_ea = idc.get_inf_attr(idc.INF_MIN_EA)
         end_ea = idc.get_inf_attr(idc.INF_MAX_EA)
@@ -134,8 +147,12 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
                 if result != None:
                     print("Found match at {:08X} {}".format(match_ea, result))
     def run(self, arg):
-        self.analyze_sig("C5 ? EF") # vpxor
-        self.analyze_sig("66 ? EF") # pxor
+        if idaapi.IDA_SDK_VERSION <= 750:
+            self.analyze_sig_75("C5 ? EF") # vpxor
+            self.analyze_sig_75("66 ? EF") # pxor
+        else:
+            self.analyze_sig("C5 ? EF") # vpxor
+            self.analyze_sig("66 ? EF") # pxor
         return 0
 
 # This class is instantiated when IDA loads the plugin.
