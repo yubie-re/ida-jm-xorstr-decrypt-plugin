@@ -86,7 +86,7 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
     def byte_xor(self, ba1, ba2):
         return bytes([_a ^ _b for _a, _b in zip(ba1, ba2)])
 
-    def handle_str_decryption(self, data_reg, key_address, previous_insn, data_address, func_addr):
+    def handle_str_decryption(self, data_reg, key_address, previous_insn, data_address, func_addr, pxor_insn):
         mov_start = self.find_stack_push_start(previous_insn, data_address)
         if mov_start == None:
             return None
@@ -125,10 +125,11 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
             if mov_insn == None:
                 return None
         result = str(self.byte_xor(xor_data, xor_key))
+        mov_to_stack_insn = self.get_next_insn(pxor_insn)
         idc.set_cmt(func_addr, result, 0)
-        cfunc = idaapi.decompile(func_addr)
+        cfunc = idaapi.decompile(mov_to_stack_insn.ea)
         tl = idaapi.treeloc_t()
-        tl.ea = func_addr
+        tl.ea = mov_to_stack_insn.ea
         tl.itp = idaapi.ITP_SEMI
         cfunc.set_user_cmt(tl, result)
         cfunc.save_user_cmts()
@@ -142,7 +143,7 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
         if previous_insn == None:
             return None
         data_address = previous_insn.ops[1].addr
-        return self.handle_str_decryption(data_reg, key_address, previous_insn, data_address, func_addr)
+        return self.handle_str_decryption(data_reg, key_address, previous_insn, data_address, func_addr, insn)
 
     def handle_vpxor(self, func_addr):
         insn = self.get_insn(func_addr)
@@ -152,7 +153,7 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
         if previous_insn == None:
             return None
         data_address = previous_insn.ops[1].addr
-        return self.handle_str_decryption(data_reg, key_address, previous_insn, data_address, func_addr)
+        return self.handle_str_decryption(data_reg, key_address, previous_insn, data_address, func_addr, insn)
 
     def analyze(self, func_addr):
         insn = self.get_insn(func_addr)
