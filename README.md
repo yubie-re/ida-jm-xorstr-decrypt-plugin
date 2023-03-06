@@ -5,7 +5,7 @@
 
 ![alt text](ida64_MSVbv5Z2qg.png)
 ![alt text](ida64_66Zji9Qx9W.png)
-
+![alt text](ida64_Goua1Gj0j4.png)
 ## Usage
 1. Put xorstr_decrypt.py into <IDA_DIR>/plugins/
 2. Open a binary, load the plguin. Any decrypted strings will be shown in the console
