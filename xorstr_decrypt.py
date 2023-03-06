@@ -283,11 +283,12 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
         #mov_to_stack_insn = self.get_next_insn(pxor_insn)
         idc.set_cmt(func_addr, result, 0)
         cfunc = idaapi.decompile(mov_to_stack_insn.ea)
-        tl = idaapi.treeloc_t()
-        tl.ea = mov_to_stack_insn.ea
-        tl.itp = idaapi.ITP_SEMI
-        cfunc.set_user_cmt(tl, result)
-        cfunc.save_user_cmts()
+        if cfunc != None:
+            tl = idaapi.treeloc_t()
+            tl.ea = mov_to_stack_insn.ea
+            tl.itp = idaapi.ITP_SEMI
+            cfunc.set_user_cmt(tl, result)
+            cfunc.save_user_cmts()
         return result
 
     """
