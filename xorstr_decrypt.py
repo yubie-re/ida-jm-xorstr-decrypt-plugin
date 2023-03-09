@@ -278,18 +278,28 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
                     mov_insn, key_address + (x + 1) * 8)
             if mov_insn == None:
                 return None
-        result = self.byte_xor(xor_data, xor_key).rstrip(b'\x00').decode('utf-8')
+            
+        decrypted = self.byte_xor(xor_data, xor_key)
+        comment = 'Decrypted: '
+        result = ''
+        
+        try:
+            result = decrypted.decode('utf-8').rstrip('\x00')
+        except:
+            result = ' '.join(["{:02x}".format(b) for b in decrypted])
+            comment = 'Raw: '
+        
         if len(result) == 0:
             return None
-        comment = 'Decrypted: ' + result
+        
         mov_to_stack_insn = self.find_stack_movdq_insn(pxor_insn, pxor_insn.ops[0].reg)
-        idc.set_cmt(func_addr, comment, 0)
+        idc.set_cmt(func_addr, comment + result, 0)
         cfunc = idaapi.decompile(mov_to_stack_insn.ea)
         if cfunc:
             tl = idaapi.treeloc_t()
             tl.ea = mov_to_stack_insn.ea
             tl.itp = idaapi.ITP_SEMI
-            cfunc.set_user_cmt(tl, comment)
+            cfunc.set_user_cmt(tl, comment + result)
             cfunc.save_user_cmts()
         return result
 
