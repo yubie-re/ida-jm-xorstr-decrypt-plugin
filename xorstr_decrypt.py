@@ -279,6 +279,8 @@ class xor_decryption_mod(ida_idaapi.plugmod_t):
             if mov_insn == None:
                 return None
         result = self.byte_xor(xor_data, xor_key).rstrip(b'\x00').decode('utf-8')
+        if len(result) == 0:
+            return None
         comment = 'Decrypted: ' + result
         mov_to_stack_insn = self.find_stack_movdq_insn(pxor_insn, pxor_insn.ops[0].reg)
         idc.set_cmt(func_addr, comment, 0)
